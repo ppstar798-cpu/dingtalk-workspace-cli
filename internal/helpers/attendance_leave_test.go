@@ -39,7 +39,7 @@ func executeAttendanceApproveCommand(t *testing.T, caller *scriptedToolCaller, o
 
 // query_leave_types_with_balance：不传 --user 时查询当前用户，且响应原样透传。
 func TestCrossPlatformCoverageAttendanceLeaveTypesCurrentUserPassesThrough(t *testing.T) {
-	payload := `{"leaveTypes":[{"leaveCode":"annual","leaveName":"年假","leaveViewUnit":"DAY","balanceHidden":false,"balance":{"remainQuota":7.5,"quotaUnit":"day"}},{"leaveCode":"sick","leaveName":"病假","balanceHidden":true,"balance":null}]}`
+	payload := `{"leaveTypes":[{"leaveCode":"annual","leaveName":"年假","leaveViewUnit":"DAY","balanceHidden":false,"balance":{"remainQuota":7.5,"quotaUnit":"day"},"leaveCertificate":{"enable":true,"duration":3,"unit":"day","promptInformation":"请上传请假证明"}},{"leaveCode":"sick","leaveName":"病假","balanceHidden":true,"balance":null}]}`
 	caller := &scriptedToolCaller{steps: []scriptedToolStep{{text: payload}}}
 	var out bytes.Buffer
 	if err := executeAttendanceApproveCommand(t, caller, &out,
@@ -53,7 +53,7 @@ func TestCrossPlatformCoverageAttendanceLeaveTypesCurrentUserPassesThrough(t *te
 	if len(caller.args) != 0 {
 		t.Fatalf("args = %#v, want empty request for current user", caller.args)
 	}
-	for _, want := range []string{"leaveCode", "annual", "balanceHidden", "remainQuota"} {
+	for _, want := range []string{"leaveCode", "annual", "balanceHidden", "remainQuota", "leaveCertificate", "enable", "duration", "unit", "promptInformation", "请上传请假证明"} {
 		if !strings.Contains(out.String(), want) {
 			t.Fatalf("output missing %q: %s", want, out.String())
 		}

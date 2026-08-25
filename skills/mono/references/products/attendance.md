@@ -163,7 +163,7 @@ Flags:
       --user string  目标员工 userId；不传时查询当前用户（查询他人需具备权限）
 ```
 
-调用 `query_leave_types_with_balance`。不传 `--user` 时查询当前用户；有权限时可按 `staffId` 查询指定员工。返回假期编码、名称、业务类型、额度单位、展示单位、说明和余额；无余额或企业隐藏余额时 `balance` 为空，`balanceHidden=true` 表示余额被隐藏。`corpId`、`opUserId` 由系统注入。
+调用 `query_leave_types_with_balance`。不传 `--user` 时查询当前用户；有权限时可按 `staffId` 查询指定员工。返回假期编码、名称、业务类型、额度单位、展示单位、说明、余额和请假证明配置；无余额或企业隐藏余额时 `balance` 为空，`balanceHidden=true` 表示余额被隐藏。`leaveCertificate` 包含 `enable`（是否启用请假证明）、`duration`（证明要求时长阈值）、`unit`（阈值单位，如 `day`、`hour`）和 `promptInformation`（请假证明提示文案）。`corpId`、`opUserId` 由系统注入。
 
 ### 导入排班记录（排班 = 为员工安排工作日期和班次, 写场景接口，必须走二次确认流程）
 ```

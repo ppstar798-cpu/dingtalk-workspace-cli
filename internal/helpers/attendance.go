@@ -1006,7 +1006,7 @@ func newAttendanceCommand() *cobra.Command {
 		Use:   "leave-types",
 		Short: "查询可用假期类型及余额",
 		Long: `调用 attendance-wukong 的 query_leave_types_with_balance 工具，查询当前用户可见的假期类型及对应余额；
-有权限时可通过 --user 查询指定员工。返回假期编码、名称、业务类型、额度单位、展示单位、说明及余额信息。
+有权限时可通过 --user 查询指定员工。返回假期编码、名称、业务类型、额度单位、展示单位、说明、余额及请假证明配置。
 无余额或企业隐藏余额时 balance 为空；balanceHidden=true 表示余额被隐藏。本命令只查询，不发起审批。`,
 		Example: `  dws attendance approve leave-types
   dws attendance approve leave-types --user <userId>`,
@@ -1039,7 +1039,7 @@ func newAttendanceCommand() *cobra.Command {
 			},
 			Result: &contract.ResultSpec{
 				Outcomes:   []contract.ResultOutcome{contract.ResultOutcomeSuccess, contract.ResultOutcomeFailure},
-				DataSchema: json.RawMessage(`{"type":"object","description":"query_leave_types_with_balance 原样透传：服务端返回员工可见的假期类型及余额；每项包含 leaveCode、leaveName、bizType、leaveUnit、leaveViewUnit、description、balanceHidden 与 balance。无余额或隐藏余额时 balance 为空","additionalProperties":true}`),
+				DataSchema: json.RawMessage(`{"type":"object","description":"query_leave_types_with_balance 原样透传：服务端返回员工可见的假期类型及余额；每项包含 leaveCode、leaveName、bizType、leaveUnit、leaveViewUnit、description、balanceHidden、balance 与 leaveCertificate。无余额或隐藏余额时 balance 为空；leaveCertificate 为请假证明配置，包含 enable、duration、unit 与 promptInformation","additionalProperties":true}`),
 			},
 			Selection: contract.SelectionSpec{
 				AgentSummary: "查询当前用户或有权限查看的指定员工可用假期类型及余额",
