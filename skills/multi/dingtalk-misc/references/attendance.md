@@ -18,7 +18,7 @@
 > 2. **本月一定是 1 日到该月实际最后一天**，严禁将"本月"截断为 1 日到 28 日或其他固定天数。
 > 3. 计算日期时必须参考当前系统时间，不得使用硬编码或模糊估算。
 > 4. 如果用户指定了具体日期范围（如"4月1日到4月15日"），直接使用用户给定的范围，不套用上述规则。
-> 5. 日期格式统一按各命令要求：`shift list` / `check result` 等使用 `YYYY-MM-DD`；`report query-data` / `report query-leave` 等使用 `yyyy-MM-dd HH:mm:ss`（start 取当天 `00:00:00`，end 取当天 `23:59:59`）。
+> 5. 日期格式统一按各命令要求：`check result` 等使用 `YYYY-MM-DD`；`report query-data` / `report query-leave` 等使用 `yyyy-MM-dd HH:mm:ss`（start 取当天 `00:00:00`，end 取当天 `23:59:59`）。
 
 ## 签到（checkin）— 优先路由
 
@@ -601,19 +601,6 @@ Flags:
       --user string   钉钉用户 ID (必填)
 ```
 
-### 查询考勤组与考勤规则
-```
-Usage:
-  dws attendance rules [flags]
-Example:
-  dws attendance rules --date 2026-03-14
-  dws attendance rules --date "2026-03-14 09:00:00"
-Flags:
-      --date string   考勤日期, 格式 YYYY-MM-DD 或 yyyy-MM-dd HH:mm:ss (必填)
-```
-
-查询考勤组/考勤规则。例如：我属于哪个考勤组、打卡范围是什么、弹性工时怎么算。
-
 ### 查询个人规则设置
 ```
 Usage:
@@ -1098,7 +1085,6 @@ Flags:
 用户说"修改考勤组/更新考勤组配置/考勤组改名/改变考勤组绑定的班次/修改打卡范围/设置考勤组负责人" → `group update`
 用户说"创建考勤组/新建考勤组/添加考勤组" → `group create`
 用户说"查询某人的考勤汇总/考勤统计/周统计/月统计" → `summary`
-用户说"考勤组/考勤规则/打卡规则" → `rules`
 用户说"查询个人规则设置/查看打卡提醒/查看极速打卡/查看缺卡提醒/查看打卡结果通知/查看个人考勤统计通知/查看团队考勤统计通知" → `selfsetting get`
 用户说"更新个人规则设置/保存打卡提醒/修改极速打卡/关闭缺卡提醒/开启打卡结果通知/设置个人考勤统计通知/设置团队考勤统计通知" → `selfsetting save`
 用户说"考勤字段/考勤列" → `report columns`
@@ -1191,9 +1177,6 @@ dws attendance group create --name "自由工时分组" --type NONE --timeout 10
 # 查看考勤统计摘要
 dws attendance summary --user <USER_ID> --date "2026-03-12 15:00:00" --format json
 
-# 查看考勤组和规则
-dws attendance rules --date 2026-03-14 --format json
-
 # 查看指定用户的打卡提醒设置
 dws attendance selfsetting get --setting-scene checkRemind --user <USER_ID> --format json
 
@@ -1279,7 +1262,7 @@ dws attendance checkin records --operator-staff-id op001 --staff-ids user001,use
 | 操作 | 提取 | 用于 |
 |------|------|------|
 | `contact user get-self` | `userId` | summary 的 --user |
-| `rules` | `groupId` | schedule import 的 --group-id |
+| `group search` | `groupId` | schedule import 的 --group-id |
 | `schedule import` | `classId` | schedule import 的 schedules 中的 classId |
 | `aisearch person` | `userId` | schedule import/get 的 userId |
 
@@ -1292,8 +1275,6 @@ dws attendance checkin records --operator-staff-id op001 --staff-ids user001,use
 - 新增命令可能不在 Agent 缓存中，直接猜测命令会失败
 - 正确流程：查看帮助 → 选择命令 → 查看命令详细参数（如 `dws attendance vacation update-type --help`）→ 执行
 
-- `record get` 的 `--date` 格式: YYYY-MM-DD（如 `2026-03-08`），CLI 自动转换为毫秒时间戳
-- `shift list` 查询班次信息，`--start/--end` 使用 YYYY-MM-DD 格式，间隔不超过 7 天
 - `schedule import` 导入排班记录 — 必须通过 [attendance-schedule.md](./attendance-schedule.md) 排班导入工作流执行
 - `schedule get` 查询排班记录 — 必须通过 [attendance-schedule.md](./attendance-schedule.md) 排班查询导出工作流执行（脚本自动分批、姓名转换、排班表格式导出）
 - `schedule import` 是写操作，AI 调用时必须先展示导入摘要并引导用户二次确认；用户明确确认后才允许执行。用户明确要求跳过确认或命令包含全局 `--yes` 时，可跳过二次确认
@@ -1312,7 +1293,6 @@ dws attendance checkin records --operator-staff-id op001 --staff-ids user001,use
 - `group create` 的 `--name` 和 `--type` 必填，`--type` 必须为 FIXED/TURN/NONE 之一；type=FIXED 时 `--group-vo` 必须包含 `workDayClassList`（非空）和 `defaultClassId`（非 null）；由于保存考勤组耗时较久，建议加 `--timeout 10`
 - `group filtered-get` 的 `--group-id` 必填，`--member/--position/--wifi/--bles` 均可选，默认 false。**返回结果中如含成员 userId 列表，必须调用 `dws contact user get --ids <userId1>,<userId2>,...`（支持逗号分隔传多个 ID），将 userId 转换为员工姓名后再输出；不得直接输出裸 userId。**
 - `summary` 的 `--date` 格式: yyyy-MM-dd HH:mm:ss（如 `2026-03-12 15:00:00`）
-- `rules` 的 `--date` 支持 YYYY-MM-DD 或 yyyy-MM-dd HH:mm:ss 两种格式
 - `selfsetting get/save` 的 `--setting-scene` 必须是 `checkRemind`、`fastCheck`、`checkResultNotify`、`lackRemind`、`personalAttendStatNotify`、`bossAttendStatNotify` 之一
 - `selfsetting get/save` 的 MCP 入参 `userId` 为必填；CLI 的 `--user` 也必填，必须显式传入目标用户 ID
 - `selfsetting save` 必须传入与 `--setting-scene` 对应的至少一个设置字段；不同场景的字段不能混用
@@ -1322,7 +1302,7 @@ dws attendance checkin records --operator-staff-id op001 --staff-ids user001,use
 - `report query-data` 和 `report query-leave` 的 `--start/--end` 格式: yyyy-MM-dd HH:mm:ss，间隔不超过 32 天，最多 20 人
 - report 系列接口仅对管理员开放
 - 用户 ID 需从 `contact user get-self` 或 `aisearch person` 获取
-- 考勤组 ID 需从 `rules` 命令返回结果中获取
+- 考勤组 ID 可从 `group search` 命令返回结果中获取
 - `vacation types` 无需任何参数，认证信息自动注入
 - `vacation balance` 的 `--users` 为目标员工 ID 列表，逗号分隔；`--leave-code` 选填，可通过 `vacation types` 获取
 - `vacation records` 的 `--start/--end` 使用 YYYY-MM-DD 格式，CLI 自动转换为毫秒时间戳；`--leave-code` 选填
@@ -1357,7 +1337,7 @@ dws attendance checkin records --operator-staff-id op001 --staff-ids user001,use
 | 参数 | 必填 | 说明 | 来源 |
 |------|------|------|------|
 | --plan-id | y* | 排班ID（与 --result-id 二选一） | `dws attendance schedule get` 返回的 `id` 字段 |
-| --result-id | y* | 打卡结果ID（与 --plan-id 二选一，优先使用） | **暂不支持**（record get 未返回此字段） |
+| --result-id | y* | 打卡结果ID（与 --plan-id 二选一，优先使用） | **暂不支持** |
 | --time | n | 新打卡时间，格式 yyyy-MM-dd HH:mm | - |
 | --result | n | 打卡结果枚举值 | - |
 | --absent-min | n | 缺勤时长（分钟） | - |
@@ -1396,8 +1376,6 @@ dws attendance boss-check --plan-id 948964045503 --time "2026-05-13 18:00" --res
 
 | 脚本 | 场景 | 用法 |
 |------|------|------|
-| [attendance_my_record.py](../scripts/attendance_my_record.py) | 查看我今天/指定日期的考勤记录 | `python attendance_my_record.py today` |
-| [attendance_team_shift.py](../scripts/attendance_team_shift.py) | 查询团队成员本周排班 | `python attendance_team_shift.py --users userId1,userId2` |
 | [attendance_report_common.py](../scripts/attendance_report_common.py) | 考勤报表导出公共模块（不可单独执行） | — |
 | [attendance_vacation_balance.py](../scripts/attendance_vacation_balance.py) | 假期余额列表 Excel 导出 | **禁止直接调用**，必须先读 [attendance-vacation.md](./attendance-vacation.md) 按工作流执行 |
 | attendance_report_detail.py | 考勤报表 — **明细粒度** |  **禁止直接调用**，必须先读 [attendance-report.md](./attendance-report.md) 按工作流执行 |
@@ -1446,8 +1424,6 @@ dws attendance boss-check --plan-id 948964045503 --time "2026-05-13 18:00" --res
 
 | 用户说 | 命令 |
 |--------|------|
-| "查我自己的打卡 / 某天考勤" | `python scripts/attendance_my_record.py 2026-03-08` 或 `dws attendance record get --user <userId> --date <YYYY-MM-DD>` |
-| "查团队排班" | `python scripts/attendance_team_shift.py --users <userId1,userId2> --from <YYYY-MM-DD> --to <YYYY-MM-DD>` |
 | "导出考勤报表 / 月度汇总 / 考勤明细 / 每日统计" | **必须先读 [attendance-report.md](./attendance-report.md)** 强制门禁后选择 `attendance_report_{detail,monthly,daily}.py` |
 | "创建班次 / 设置班次" | 先读 [attendance.md](./attendance.md) 的 `class create`，确认后执行 |
 | "导入排班 / 安排排班" | 先读 [attendance.md](./attendance.md) 的 `schedule import`，确认后执行 |
